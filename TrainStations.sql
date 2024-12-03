@@ -1,82 +1,106 @@
-CREATE DATABASE  IF NOT EXISTS TrainStations
-use TrainStations;
+CREATE DATABASE IF NOT EXISTS TrainStations;
+USE TrainStations;
 
-drop table if exists Stops;
-drop table if exists Reservation;
-drop table if exists Tschedule;
-drop table if exists Customer;
-drop table if exists Employee;
-drop table if exists Station;
-drop table if exists Train;
+-- Drop tables if they already exist
+DROP TABLE IF EXISTS Messages;
+DROP TABLE IF EXISTS Stops;
+DROP TABLE IF EXISTS Reservation;
+DROP TABLE IF EXISTS Tschedule;
+DROP TABLE IF EXISTS Customer;
+DROP TABLE IF EXISTS Employee;
+DROP TABLE IF EXISTS Station;
+DROP TABLE IF EXISTS Train;
 
-create table Station (
-	sid int primary key, 
-    name varchar(50), 
-    city varchar(50), 
-    state varchar(50)
-) engine = InnoDB;
+-- Station Table
+CREATE TABLE Station (
+    sid INT PRIMARY KEY, 
+    name VARCHAR(50), 
+    city VARCHAR(50), 
+    state VARCHAR(50)
+) ENGINE = InnoDB;
 
-create table Train(
-	tid int primary key
-)engine = InnoDB;
+-- Train Table
+CREATE TABLE Train (
+    tid INT PRIMARY KEY
+) ENGINE = InnoDB;
 
-create table Customer (
-	username varchar(50) primary key, 
-    password varchar(50), 
-    email varchar(50), 
-    fname varchar(50), 
-    name varchar(50)
-) engine = InnoDB;
+-- Customer Table
+CREATE TABLE Customer (
+    username VARCHAR(50) PRIMARY KEY, 
+    password VARCHAR(50), 
+    email VARCHAR(50), 
+    first_name VARCHAR(50), 
+    last_name VARCHAR(50)
+) ENGINE = InnoDB;
 
-create table Employee (
-	username varchar(50) primary key, 
-    password varchar(50), 
-    ssn varchar(11), 
-    fname varchar(50), 
-    name varchar(50), 
-    role enum('manager', 'customer_rep')
-) engine = InnoDB;
+-- Employee Table
+CREATE TABLE Employee (
+    username VARCHAR(50) PRIMARY KEY, 
+    password VARCHAR(50), 
+    ssn VARCHAR(11), 
+    first_name VARCHAR(50), 
+    last_name VARCHAR(50), 
+    role ENUM('manager', 'customer_rep')
+) ENGINE = InnoDB;
 
-create table Tschedule (
-	schedule_id int primary key, 
-    transit_line varchar(50), 
-    origin_id int, 
-    destination_id int, 
-    base_fare double, 
-    origin_departure datetime, 
-    origin_arrival datetime,
-    destination_departure datetime, 
-    destination_arrival datetime,
-    train_id int, 
-    foreign key (origin_id) references Station(sid),
-	foreign key (train_id) references Train(tid)
-    ) engine = InnoDB;
-    
-create table Stops (
-	stop_id int primary key, 
-    station_id int, 
-    schedule_id int, 
-    stop_sequence_num int, 
-    arrival datetime, 
-    departure datetime, 
-    foreign key (station_id) references Station(sid), 
-    foreign key (schedule_id) references Tschedule(schedule_id)
-) engine = InnoDB;
+-- Train Schedule Table
+CREATE TABLE Tschedule (
+    schedule_id INT PRIMARY KEY, 
+    transit_line VARCHAR(50), 
+    origin_id INT, 
+    destination_id INT, 
+    travel_time INT, -- in minutes
+    base_fare DOUBLE, 
+    origin_departure DATETIME, 
+    destination_arrival DATETIME, 
+    train_id INT, 
+    FOREIGN KEY (origin_id) REFERENCES Station(sid),
+    FOREIGN KEY (destination_id) REFERENCES Station(sid),
+    FOREIGN KEY (train_id) REFERENCES Train(tid)
+) ENGINE = InnoDB;
 
-create table Reservation (
-	rid int primary key, 
-    passenger varchar(50),
-	total_fare double, 
-    date_made datetime, 
-    schedule_id int,
-	canceled boolean, 
-    oversees varchar(50), 
-    trip_type enum('oneway', 'roundtrip'), 
-	foreign key (schedule_id) references Tschedule(schedule_id),
-    foreign key (passenger) references Customer(username), 
-	foreign key (oversees) references Employee(username)
-) engine = InnoDB;
+-- Stops Table
+CREATE TABLE Stops (
+    stop_id INT PRIMARY KEY, 
+    station_id INT, 
+    schedule_id INT, 
+    stop_sequence_num INT, 
+    arrival DATETIME, 
+    departure DATETIME, 
+    fare DOUBLE, 
+    FOREIGN KEY (station_id) REFERENCES Station(sid), 
+    FOREIGN KEY (schedule_id) REFERENCES Tschedule(schedule_id)
+) ENGINE = InnoDB;
 
+-- Reservation Table
+CREATE TABLE Reservation (
+    rid INT PRIMARY KEY, 
+    passenger VARCHAR(50), 
+    total_fare DOUBLE, 
+    date_made DATETIME, 
+    origin_id INT, 
+    destination_id INT, 
+    schedule_id INT, 
+    canceled BOOLEAN DEFAULT FALSE, 
+    oversees VARCHAR(50), 
+    trip_type ENUM('oneway', 'roundtrip'), 
+    FOREIGN KEY (schedule_id) REFERENCES Tschedule(schedule_id),
+    FOREIGN KEY (passenger) REFERENCES Customer(username), 
+    FOREIGN KEY (oversees) REFERENCES Employee(username),
+    FOREIGN KEY (origin_id) REFERENCES Station(sid),
+    FOREIGN KEY (destination_id) REFERENCES Station(sid)
+) ENGINE = InnoDB;
+
+-- Messages Table (for customer-service interactions)
+CREATE TABLE Messages (
+    message_id INT PRIMARY KEY,
+    customer_username VARCHAR(50),
+    employee_username VARCHAR(50),
+    message_content TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_username) REFERENCES Customer(username),
+    FOREIGN KEY (employee_username) REFERENCES Employee(username)
+) ENGINE = InnoDB;
 
 
 delete from Employee;
